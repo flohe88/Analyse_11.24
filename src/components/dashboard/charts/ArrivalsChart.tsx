@@ -10,7 +10,7 @@ import {
   Legend,
 } from 'chart.js';
 import { BookingData } from '../../../types/booking';
-import { startOfMonth, format, isWithinInterval, min, max } from 'date-fns';
+import { startOfMonth, format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 ChartJS.register(
@@ -23,104 +23,84 @@ ChartJS.register(
 );
 
 interface ArrivalsChartProps {
-  data: BookingData[];
-  dateRange: {
-    start: Date | null;
-    end: Date | null;
-  };
+  bookings: BookingData[];
 }
 
-export function ArrivalsChart({ data, dateRange }: ArrivalsChartProps) {
-  // Berechne den gesamten verfügbaren Zeitraum
-  const fullDateRange = React.useMemo(() => {
-    if (data.length === 0) return { start: null, end: null };
-    
-    const dates = data.map(booking => new Date(booking.arrivalDate));
-    return {
-      start: min(dates),
-      end: max(dates)
-    };
-  }, [data]);
-
+export function ArrivalsChart({ bookings }: ArrivalsChartProps) {
   const monthlyArrivals = React.useMemo(() => {
-    if (data.length === 0) return [];
-
-    const effectiveDateRange = {
-      start: dateRange.start || fullDateRange.start,
-      end: dateRange.end || fullDateRange.end
-    };
-
-    if (!effectiveDateRange.start || !effectiveDateRange.end) return [];
+    if (!bookings || !Array.isArray(bookings)) return [];
 
     const monthlyData = new Map<string, number>();
 
-    // Filter data within date range and group by month
-    data.forEach((booking) => {
-      const bookingDate = new Date(booking.arrivalDate);
-      if (isWithinInterval(bookingDate, { 
-        start: effectiveDateRange.start, 
-        end: effectiveDateRange.end 
-      })) {
-        const monthKey = format(startOfMonth(bookingDate), 'yyyy-MM');
-        const current = monthlyData.get(monthKey) || 0;
-        monthlyData.set(monthKey, current + 1);
+    bookings.forEach((booking) => {
+      if (!booking?.arrivalDate) return;
+
+      try {
+        const arrivalDate = new Date(booking.arrivalDate);
+        if (isNaN(arrivalDate.getTime())) return;
+
+        const monthKey = format(startOfMonth(arrivalDate), 'yyyy-MM');
+        const currentCount = monthlyData.get(monthKey) || 0;
+        monthlyData.set(monthKey, currentCount + 1);
+      } catch (error) {
+        console.warn('Fehler beim Verarbeiten des Datums:', booking.arrivalDate);
       }
     });
 
-    // Convert to array and sort by date
     return Array.from(monthlyData.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([month, count]) => ({
-        month: format(new Date(month + '-01'), 'MMM yyyy', { locale: de }),
-        count,
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, count]) => ({
+        date,
+        count
       }));
-  }, [data, dateRange, fullDateRange]);
+  }, [bookings]);
 
   const chartData = {
-    labels: monthlyArrivals.map(item => item.month),
+    labels: monthlyArrivals.map(item => 
+      format(new Date(item.date), 'MMM yyyy', { locale: de })
+    ),
     datasets: [
       {
-        label: 'Anreisen',
+        label: 'Ankünfte',
         data: monthlyArrivals.map(item => item.count),
-        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-        borderColor: 'rgb(54, 162, 235)',
+        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+        borderColor: 'rgb(59, 130, 246)',
         borderWidth: 1,
-      },
-    ],
+      }
+    ]
   };
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top' as const,
-      },
-      title: {
-        display: true,
-        text: 'Anreisen pro Monat',
+        display: false
       },
       tooltip: {
         callbacks: {
-          label: (context: any) => `${context.formattedValue} Anreisen`,
-        },
-      },
+          label: function(context: any) {
+            const count = context.raw;
+            return `${count} ${count === 1 ? 'Ankunft' : 'Ankünfte'}`;
+          }
+        }
+      }
     },
     scales: {
       y: {
         beginAtZero: true,
-        title: {
-          display: true,
-          text: 'Anzahl der Anreisen',
-        },
         ticks: {
           stepSize: 1,
-        },
-      },
-    },
+          callback: function(value: any) {
+            return value.toFixed(0);
+          }
+        }
+      }
+    }
   };
 
   return (
-    <div className="p-4">
+    <div className="h-[400px]">
       <Bar data={chartData} options={options} />
     </div>
   );

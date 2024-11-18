@@ -1,24 +1,23 @@
 export interface BookingData {
   bookingCode: string;
-  bookingDate: Date;
+  bookingDate: string;
   bookingTime: string;
-  arrivalDate: Date;
-  departureDate: Date;
-  serviceCity: string;
-  serviceName: string;
-  serviceRegion: string;  // Neue Eigenschaft für Region
-  region: string;
-  totalPrice: number;
+  arrivalDate: string;
+  departureDate: string;
+  accommodation: string;
+  apartmentType: string;
+  revenue: number;
+  commission: number;
+  commissionPercent: number;
+  nights: number;
+  customerZip: string;
+  customerCity: string;
   adults: number;
   children: number;
-  persons: number;
-  country: string;
-  postalCode: string;
-  city: string;
-  serviceCountry: string;
-  cancelled: boolean;
-  cancellationDate?: Date;
-  commission: number;
+  pets: number;
+  bookingSource: string;
+  isCancelled: boolean;
+  phoneBooking: string;
 }
 
 export interface FilterState {

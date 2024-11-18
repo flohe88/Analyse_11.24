@@ -15,22 +15,20 @@ export const FilterToggle: React.FC<FilterToggleProps> = ({ isYearComparison, on
         type="button"
         onClick={() => onToggle(!isYearComparison)}
         className={`
-          relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent 
-          transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2
-          ${isYearComparison ? 'bg-blue-600' : 'bg-gray-200'}
+          relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent 
+          transition-all duration-300 ease-in-out focus:outline-none
+          ${isYearComparison 
+            ? 'bg-blue-600 after:translate-x-7' 
+            : 'bg-gray-200 after:translate-x-0'
+          }
+          after:absolute after:top-0.5 after:left-0.5 
+          after:h-5 after:w-5 after:rounded-full after:bg-white 
+          after:shadow-md after:transition-all after:duration-300 after:ease-in-out
+          hover:${isYearComparison ? 'bg-blue-700' : 'bg-gray-300'}
         `}
         role="switch"
         aria-checked={isYearComparison}
-      >
-        <span
-          aria-hidden="true"
-          className={`
-            pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 
-            transition duration-200 ease-in-out
-            ${isYearComparison ? 'translate-x-5' : 'translate-x-0'}
-          `}
-        />
-      </button>
+      />
       <span className={`text-sm font-medium ${isYearComparison ? 'text-blue-600' : 'text-gray-500'}`}>
         Jahresvergleich
       </span>

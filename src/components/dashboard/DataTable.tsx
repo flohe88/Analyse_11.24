@@ -8,120 +8,194 @@ import {
   flexRender,
   SortingState,
 } from '@tanstack/react-table'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { BookingData } from '../../types/booking'
 
 interface DataTableProps {
-  data: BookingData[]
+  data: any[]
 }
 
 export function DataTable({ data }: DataTableProps) {
   const [globalFilter, setGlobalFilter] = useState('')
   const [sorting, setSorting] = useState<SortingState>([
-    { id: 'bookingDate', desc: true } // Standardmäßig nach Buchungsdatum absteigend sortieren
+    { id: 'arrivalDate', desc: true }
   ])
 
-  const columns = useMemo<ColumnDef<BookingData>[]>(
+  const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('de-DE', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
+
+  const columns = useMemo<ColumnDef<any>[]>(
     () => [
       {
-        accessorKey: 'bookingCode',
         header: 'Buchungscode',
+        accessorKey: 'bookingCode',
       },
       {
-        accessorKey: 'bookingDate',
         header: 'Buchungsdatum',
-        cell: (info) => format(new Date(info.getValue() as string), 'dd.MM.yyyy', { locale: de }),
-        sortingFn: 'datetime', // Spezielle Sortierung für Datumswerte
-      },
-      {
-        accessorKey: 'arrivalDate',
-        header: 'Anreise',
-        cell: (info) => format(new Date(info.getValue() as string), 'dd.MM.yyyy', { locale: de }),
-        sortingFn: 'datetime',
-      },
-      {
-        accessorKey: 'departureDate',
-        header: 'Abreise',
-        cell: (info) => format(new Date(info.getValue() as string), 'dd.MM.yyyy', { locale: de }),
-        sortingFn: 'datetime',
-      },
-      {
-        accessorKey: 'serviceCity',
-        header: 'Stadt',
-      },
-      {
-        accessorKey: 'serviceName',
-        header: 'Unterkunft',
-      },
-      {
-        accessorKey: 'region',
-        header: 'Region',
-      },
-      {
-        accessorKey: 'totalPrice',
-        header: 'Gesamtpreis',
-        cell: (info) =>
-          new Intl.NumberFormat('de-DE', {
-            style: 'currency',
-            currency: 'EUR',
-          }).format(info.getValue() as number),
-        sortingFn: 'number',
-      },
-      {
-        accessorKey: 'adults',
-        header: 'Erwachsene',
-        sortingFn: 'number',
-      },
-      {
-        accessorKey: 'children',
-        header: 'Kinder',
-        sortingFn: 'number',
-      },
-      {
-        accessorKey: 'persons',
-        header: 'Personen',
-        sortingFn: 'number',
-      },
-      {
-        accessorKey: 'country',
-        header: 'Land',
-      },
-      {
-        accessorKey: 'postalCode',
-        header: 'PLZ',
-      },
-      {
-        accessorKey: 'city',
-        header: 'Stadt (Kunde)',
-      },
-      {
-        accessorKey: 'serviceCountry',
-        header: 'Land (Service)',
-      },
-      {
-        accessorKey: 'cancelled',
-        header: 'Storniert',
-        cell: (info) => (info.getValue() ? 'Ja' : 'Nein'),
-      },
-      {
-        accessorKey: 'cancellationDate',
-        header: 'Stornierungsdatum',
-        cell: (info) => {
-          const value = info.getValue() as string
-          return value ? format(new Date(value), 'dd.MM.yyyy', { locale: de }) : '-'
+        accessorKey: 'bookingDate',
+        cell: ({ getValue }) => {
+          const date = getValue() as string;
+          return date ? format(parseISO(date), 'dd.MM.yyyy', { locale: de }) : '';
         },
         sortingFn: 'datetime',
       },
       {
-        accessorKey: 'commission',
-        header: 'Provision',
-        cell: (info) =>
-          new Intl.NumberFormat('de-DE', {
-            style: 'currency',
-            currency: 'EUR',
-          }).format(info.getValue() as number),
+        header: 'Uhrzeit',
+        accessorKey: 'bookingTime',
+      },
+      {
+        header: 'Anreisedatum',
+        accessorKey: 'arrivalDate',
+        cell: ({ getValue }) => {
+          const date = getValue() as string;
+          return date ? format(parseISO(date), 'dd.MM.yyyy', { locale: de }) : '';
+        },
+        sortingFn: 'datetime',
+      },
+      {
+        header: 'Abreisedatum',
+        accessorKey: 'departureDate',
+        cell: ({ getValue }) => {
+          const date = getValue() as string;
+          return date ? format(parseISO(date), 'dd.MM.yyyy', { locale: de }) : '';
+        },
+        sortingFn: 'datetime',
+      },
+      {
+        header: 'Unterkunft',
+        accessorKey: 'accommodation',
+      },
+      {
+        header: 'Wohnung',
+        accessorKey: 'apartmentType',
+      },
+      {
+        header: 'Umsatz',
+        accessorKey: 'revenue',
+        cell: ({ getValue }) => {
+          const value = getValue() as number;
+          return formatCurrency(value);
+        },
         sortingFn: 'number',
+      },
+      {
+        header: 'Stornierung',
+        accessorKey: 'isCancelled',
+        cell: ({ getValue }) => {
+          const isCancelled = getValue() as boolean;
+          return isCancelled ? 'Ja' : '';
+        },
+      },
+      {
+        header: 'Telefonische Buchung',
+        accessorKey: 'phoneBooking',
+      },
+      {
+        header: 'Provision',
+        accessorKey: 'commission',
+        cell: ({ getValue }) => {
+          const value = getValue() as number;
+          return formatCurrency(value);
+        },
+        sortingFn: 'number',
+      },
+      {
+        header: 'Provision %',
+        accessorKey: 'commissionPercent',
+        cell: ({ getValue }) => {
+          const value = getValue() as number;
+          return value ? `${value}%` : '';
+        },
+        sortingFn: 'number',
+      },
+      {
+        header: 'Servicepauschale',
+        accessorKey: 'serviceFee',
+        cell: ({ row }) => {
+          const revenue = row.getValue('revenue') as number;
+          return revenue > 150 ? formatCurrency(25) : '';
+        },
+      },
+      {
+        header: 'Nächte',
+        accessorKey: 'nights',
+        cell: ({ row }) => {
+          const arrivalDate = row.getValue('arrivalDate') as string;
+          const departureDate = row.getValue('departureDate') as string;
+          
+          if (!arrivalDate || !departureDate) return '';
+          
+          try {
+            const arrival = parseISO(arrivalDate);
+            const departure = parseISO(departureDate);
+            
+            const nights = Math.floor((departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24));
+            return nights > 0 ? nights : '';
+          } catch (error) {
+            console.error('Fehler bei der Nächteberechnung:', error, {
+              arrivalDate,
+              departureDate
+            });
+            return '';
+          }
+        },
+        sortingFn: (rowA, rowB) => {
+          const getNights = (row: any) => {
+            const arrivalDate = row.getValue('arrivalDate') as string;
+            const departureDate = row.getValue('departureDate') as string;
+            
+            if (!arrivalDate || !departureDate) return 0;
+            
+            try {
+              const arrival = parseISO(arrivalDate);
+              const departure = parseISO(departureDate);
+              
+              const nights = Math.floor((departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24));
+              return nights > 0 ? nights : 0;
+            } catch {
+              return 0;
+            }
+          };
+          
+          return getNights(rowA) - getNights(rowB);
+        },
+      },
+      {
+        header: 'PLZ',
+        accessorKey: 'customerZip',
+      },
+      {
+        header: 'Ort',
+        accessorKey: 'customerCity',
+      },
+      {
+        header: 'Erwachsene',
+        accessorKey: 'adults',
+        sortingFn: 'number',
+      },
+      {
+        header: 'Kinder',
+        accessorKey: 'children',
+        sortingFn: 'number',
+      },
+      {
+        header: 'Haustiere',
+        accessorKey: 'pets',
+        sortingFn: 'number',
+      },
+      {
+        header: 'Buchung über',
+        accessorKey: 'bookingSource',
+        cell: ({ getValue }) => {
+          const value = getValue() as string;
+          return value?.trim() || 'ABC';
+        },
       },
     ],
     []
@@ -131,29 +205,29 @@ export function DataTable({ data }: DataTableProps) {
     data,
     columns,
     state: {
-      globalFilter,
       sorting,
+      globalFilter,
     },
-    onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   })
 
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
-      <div className="p-4">
+    <div className="mt-4">
+      <div className="mb-4">
         <input
           type="text"
-          value={globalFilter}
+          value={globalFilter ?? ''}
           onChange={(e) => setGlobalFilter(e.target.value)}
+          className="p-2 border rounded w-full max-w-xs"
           placeholder="Suchen..."
-          className="w-full p-2 border rounded"
         />
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full">
+        <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
@@ -161,22 +235,19 @@ export function DataTable({ data }: DataTableProps) {
                   <th
                     key={header.id}
                     onClick={header.column.getToggleSortingHandler()}
-                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none ${
-                      header.column.getCanSort() ? 'hover:text-gray-700' : ''
-                    }`}
+                    className={`
+                      px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                      ${header.column.getCanSort() ? 'cursor-pointer select-none' : ''}
+                    `}
                   >
-                    <div className="flex items-center gap-2">
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                      <span className="text-gray-400">
-                        {{
-                          asc: '↑',
-                          desc: '↓',
-                        }[header.column.getIsSorted() as string] ?? ''}
-                      </span>
-                    </div>
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                    {{
+                      asc: ' 🔼',
+                      desc: ' 🔽',
+                    }[header.column.getIsSorted() as string] ?? null}
                   </th>
                 ))}
               </tr>
@@ -184,7 +255,7 @@ export function DataTable({ data }: DataTableProps) {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-gray-50">
+              <tr key={row.id}>
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}

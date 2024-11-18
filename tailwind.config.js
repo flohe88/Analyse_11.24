@@ -15,6 +15,15 @@ export default {
         success: '#10b981',
         warning: '#f59e0b',
         error: '#ef4444'
+      },
+      keyframes: {
+        'bounce-x': {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '50%': { transform: 'translateX(10px)' }
+        }
+      },
+      animation: {
+        'bounce-x': 'bounce-x 1s infinite'
       }
     },
   },

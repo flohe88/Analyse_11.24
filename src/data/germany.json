@@ -1,0 +1,143 @@
+{
+  "type": "Topology",
+  "arcs": [...],
+  "objects": {
+    "states": {
+      "type": "GeometryCollection",
+      "geometries": [
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Baden-Württemberg",
+            "ID_1": "1"
+          },
+          "arcs": [[[0, 1, 2, 3, 4, 5, 6, 7, 8]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Bayern",
+            "ID_1": "2"
+          },
+          "arcs": [[[9, 10, 11, 12, 13, -3]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Berlin",
+            "ID_1": "3"
+          },
+          "arcs": [[[14]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Brandenburg",
+            "ID_1": "4"
+          },
+          "arcs": [[[15, 16, 17, -15, 18, 19]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Bremen",
+            "ID_1": "5"
+          },
+          "arcs": [[[20]], [[21]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Hamburg",
+            "ID_1": "6"
+          },
+          "arcs": [[[22]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Hessen",
+            "ID_1": "7"
+          },
+          "arcs": [[[23, 24, 25, 26, 27, 28]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Mecklenburg-Vorpommern",
+            "ID_1": "8"
+          },
+          "arcs": [[[29, 30, -16]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Niedersachsen",
+            "ID_1": "9"
+          },
+          "arcs": [[[-21]], [[-22]], [[31, 32, 33, -23, 34, 35, -27, 36]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Nordrhein-Westfalen",
+            "ID_1": "10"
+          },
+          "arcs": [[[-26, -36, 37, 38]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Rheinland-Pfalz",
+            "ID_1": "11"
+          },
+          "arcs": [[[39, 40, -28, -38, -35, 41]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Saarland",
+            "ID_1": "12"
+          },
+          "arcs": [[[-40, 42]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Sachsen",
+            "ID_1": "13"
+          },
+          "arcs": [[[-18, 43, 44, 45]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Sachsen-Anhalt",
+            "ID_1": "14"
+          },
+          "arcs": [[[-44, -17, -31, 46, -33, 47]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Schleswig-Holstein",
+            "ID_1": "15"
+          },
+          "arcs": [[[-34, -47, -30, 48]]]
+        },
+        {
+          "type": "MultiPolygon",
+          "properties": {
+            "NAME_1": "Thüringen",
+            "ID_1": "16"
+          },
+          "arcs": [[[-45, -48, -32, -29, -41, -43]]]
+        }
+      ]
+    }
+  },
+  "transform": {
+    "scale": [0.0037237884487534627, 0.0023632219859830472],
+    "translate": [5.8663153648071289, 47.270362854003906]
+  }
+}

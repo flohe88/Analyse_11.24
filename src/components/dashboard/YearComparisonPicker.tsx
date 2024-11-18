@@ -13,44 +13,64 @@ export function YearComparisonPicker({
   onYear1Change,
   onYear2Change,
 }: YearComparisonPickerProps) {
-  // Generiere eine Liste von Jahren (aktuelle Jahr bis 10 Jahre zurück)
   const years = Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - i);
 
-  return (
-    <div className="flex gap-4">
-      <div>
-        <label htmlFor="year1" className="block text-sm font-medium text-gray-700 mb-1">
-          Jahr 1
-        </label>
-        <select
-          id="year1"
-          value={year1}
-          onChange={(e) => onYear1Change(Number(e.target.value))}
-          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
+  const SelectYear = ({ value, onChange, label }: { value: number; onChange: (year: number) => void; label: string }) => (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="
+          appearance-none
+          w-full
+          bg-white
+          border border-gray-200
+          text-gray-700
+          font-medium
+          rounded-lg
+          pl-4 pr-10
+          py-2.5
+          text-sm
+          leading-tight
+          transition-all
+          duration-200
+          cursor-pointer
+          hover:border-blue-400
+          focus:outline-none
+          focus:border-blue-500
+          focus:ring
+          focus:ring-blue-200
+          focus:ring-opacity-50
+        "
+      >
+        {years.map((year) => (
+          <option key={year} value={year}>
+            {year}
+          </option>
+        ))}
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+        <svg 
+          className="h-5 w-5 transition-transform duration-200" 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
         >
-          {years.map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
       </div>
-      <div>
-        <label htmlFor="year2" className="block text-sm font-medium text-gray-700 mb-1">
-          Jahr 2
-        </label>
-        <select
-          id="year2"
-          value={year2}
-          onChange={(e) => onYear2Change(Number(e.target.value))}
-          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
-        >
-          {years.map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
+    </div>
+  );
+
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-600">Aktuell</label>
+        <SelectYear value={year1} onChange={onYear1Change} label="Jahr 1" />
+      </div>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-600">Vergleich</label>
+        <SelectYear value={year2} onChange={onYear2Change} label="Jahr 2" />
       </div>
     </div>
   );
