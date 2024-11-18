@@ -137,7 +137,22 @@ export function TopRevenueTable({
 
     if (!rangeStart || !rangeEnd) return 0;
 
-    // Beschränke die Buchungsdaten auf den gefilterten Zeitraum
+    // Für den Jahresvergleich den tatsächlichen Zeitraum im jeweiligen Jahr verwenden
+    if (isYearComparison) {
+      const year = isComparison ? rangeStart.getFullYear() - 1 : rangeStart.getFullYear();
+      const yearStart = new Date(year, 0, 1);
+      const yearEnd = new Date(year, 11, 31);
+
+      // Beschränke die Buchungsdaten auf das jeweilige Jahr
+      if (arrival < yearStart) arrival = yearStart;
+      if (departure > yearEnd) departure = yearEnd;
+
+      // Berechne die Nächte nur innerhalb des Jahres
+      const nights = Math.max(0, differenceInDays(departure, arrival));
+      return nights;
+    }
+
+    // Für normale Vergleiche den gefilterten Zeitraum verwenden
     if (arrival < rangeStart) arrival = rangeStart;
     if (departure > rangeEnd) departure = rangeEnd;
 
@@ -287,7 +302,8 @@ export function TopRevenueTable({
       sortedStats = sortedStats.map(stat => {
         const comparisonStat = comparisonStats[stat.accommodation];
         if (comparisonStat) {
-          return {
+          // Füge Vergleichsdaten für die gesamte Unterkunft hinzu
+          const updatedStat = {
             ...stat,
             difference: {
               revenue: stat.totalRevenue - comparisonStat.totalRevenue,
@@ -296,13 +312,32 @@ export function TopRevenueTable({
               nights: stat.totalNights - comparisonStat.totalNights
             }
           };
+
+          // Füge Vergleichsdaten für jedes Apartment hinzu
+          if (updatedStat.apartments && comparisonStat.apartments) {
+            Object.keys(updatedStat.apartments).forEach(apartmentType => {
+              const currentApartment = updatedStat.apartments![apartmentType];
+              const comparisonApartment = comparisonStat.apartments![apartmentType];
+              
+              if (comparisonApartment) {
+                currentApartment.difference = {
+                  revenue: currentApartment.totalRevenue - comparisonApartment.totalRevenue,
+                  commission: currentApartment.totalCommission - comparisonApartment.totalCommission,
+                  bookings: currentApartment.bookingCount - comparisonApartment.bookingCount,
+                  nights: currentApartment.totalNights - comparisonApartment.totalNights
+                };
+              }
+            });
+          }
+
+          return updatedStat;
         }
         return stat;
       });
     }
 
     return sortedStats;
-  }, [data, comparisonData, searchQuery, selectedBookingSource]);
+  }, [data, comparisonData, searchQuery, selectedBookingSource, totalDaysInRange]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('de-DE', {

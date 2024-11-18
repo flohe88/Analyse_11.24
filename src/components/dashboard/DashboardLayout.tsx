@@ -14,6 +14,8 @@ import { FilterToggle } from './FilterToggle'
 import { DataTable } from './DataTable'
 import { ArrivalMonthsChart } from './charts/ArrivalMonthsChart'
 import { MonthlyCommissionComparison } from './charts/MonthlyCommissionComparison'
+import { BookingsByArrivalMonthChart } from './charts/BookingsByArrivalMonthChart'
+import { BookingTimeDistributionChart } from './charts/BookingTimeDistributionChart'
 import { BookingData } from '../../types/booking'
 
 interface DashboardLayoutProps {
@@ -267,9 +269,43 @@ export function DashboardLayout({ bookings }: DashboardLayoutProps) {
           />
 
           {/* Charts */}
-          {/* Jahresvergleich Chart */}
+          {filterType === 'arrival' && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Anreisen pro Monat</h2>
+              <ArrivalMonthsChart
+                data={filteredData}
+                comparisonData={comparisonData}
+                filterStartDate={dateRange.start}
+                filterEndDate={dateRange.end}
+                isYearComparison={isYearComparison}
+              />
+            </div>
+          )}
+
+          {filterType === 'booking' && !isYearComparison && (
+            <>
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Buchungen nach Anreisemonat</h2>
+                <BookingsByArrivalMonthChart
+                  data={filteredData}
+                  filterStartDate={dateRange.start}
+                  filterEndDate={dateRange.end}
+                />
+              </div>
+
+              <div className="bg-white shadow rounded-lg p-6 mt-6">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Buchungen nach Uhrzeit</h2>
+                <BookingTimeDistributionChart
+                  data={filteredData}
+                  filterStartDate={dateRange.start}
+                  filterEndDate={dateRange.end}
+                />
+              </div>
+            </>
+          )}
+
           {isYearComparison && (
-            <div className="bg-white shadow rounded-lg p-6 mb-8">
+            <div className="bg-white shadow rounded-lg p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-4">
                 Provisionsvergleich nach Monat
               </h2>
@@ -277,18 +313,6 @@ export function DashboardLayout({ bookings }: DashboardLayoutProps) {
                 data={filteredData}
                 comparisonData={comparisonData || []}
                 filterType={filterType}
-              />
-            </div>
-          )}
-
-          {/* Chart für Buchungsdatum-Filter */}
-          {filterType === 'booking' && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Verteilung der Anreisemonate</h2>
-              <ArrivalMonthsChart 
-                data={filteredData}
-                comparisonData={comparisonData}
-                isYearComparison={isYearComparison}
               />
             </div>
           )}

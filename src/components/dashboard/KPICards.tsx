@@ -47,14 +47,14 @@ export function KPICards({ data, isYearComparison, comparisonData, endDate, comp
           try {
             const arrival = parseISO(booking.arrivalDate);
             const departure = parseISO(booking.departureDate);
-            const nights = Math.round((departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24));
+            const nights = (departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24);
             return sum + nights;
           } catch (error) {
             console.error('Error calculating nights for booking:', error);
             return sum;
           }
         }, 0);
-        averageNights = Math.round(totalNights / validBookings.length);
+        averageNights = Number((totalNights / validBookings.length).toFixed(2));
       }
     }
 
@@ -212,14 +212,14 @@ export function KPICards({ data, isYearComparison, comparisonData, endDate, comp
             try {
               const arrival = parseISO(booking.arrivalDate);
               const departure = parseISO(booking.departureDate);
-              const nights = Math.round((departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24));
+              const nights = (departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24);
               return sum + nights;
             } catch (error) {
               console.error('Error calculating nights for booking:', error);
               return sum;
             }
           }, 0);
-          comparisonAverageNights = Math.round(totalNights / validBookings.length);
+          comparisonAverageNights = Number((totalNights / validBookings.length).toFixed(2));
         }
       }
 
