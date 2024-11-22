@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { BookingData } from '../../types/booking';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { differenceInDays, parseISO, isWithinInterval, max, min } from 'date-fns';
+import { Link } from 'react-router-dom';
 
 interface TopRevenueTableProps {
   data: BookingData[];
@@ -471,22 +472,31 @@ export function TopRevenueTable({
                             {index + 1}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            <button
-                              onClick={() => setExpandedAccommodation(isExpanded ? null : stat.accommodation)}
-                              className="flex items-center space-x-2 hover:text-blue-600 focus:outline-none"
-                            >
-                              {isExpanded ? (
-                                <ChevronUpIcon className="h-4 w-4" />
-                              ) : (
-                                <ChevronDownIcon className="h-4 w-4" />
-                              )}
-                              <span>{stat.accommodation}</span>
-                              {Object.keys(stat.bookingSources).map((source, index) => (
-                                <span key={index} className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSourceColor(source).bg} ${getSourceColor(source).text}`}>
-                                  {source}
-                                </span>
-                              ))}
-                            </button>
+                            <div className="flex items-center justify-between">
+                              <button
+                                onClick={() => setExpandedAccommodation(isExpanded ? null : stat.accommodation)}
+                                className="flex items-center space-x-2 hover:text-blue-600 focus:outline-none"
+                              >
+                                {isExpanded ? (
+                                  <ChevronUpIcon className="h-4 w-4" />
+                                ) : (
+                                  <ChevronDownIcon className="h-4 w-4" />
+                                )}
+                                <span>{stat.accommodation}</span>
+                              </button>
+                              <Link
+                                to={`/accommodation/${encodeURIComponent(stat.accommodation)}`}
+                                state={{ bookings: data }}
+                                className="ml-2 px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                              >
+                                Details
+                              </Link>
+                            </div>
+                            {Object.keys(stat.bookingSources).map((source, index) => (
+                              <span key={index} className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSourceColor(source).bg} ${getSourceColor(source).text}`}>
+                                {source}
+                              </span>
+                            ))}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"></td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

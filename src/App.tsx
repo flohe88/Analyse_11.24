@@ -1,10 +1,17 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { DashboardLayout } from './components/dashboard/DashboardLayout'
+import { AccommodationDetailsDashboard } from './components/dashboard/AccommodationDetailsDashboard'
 
 function App() {
   return (
-    <div className="App">
-      <DashboardLayout />
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<DashboardLayout />} />
+          <Route path="/accommodation/:accommodationName" element={<AccommodationDetailsDashboard />} />
+        </Routes>
+      </div>
+    </Router>
   )
 }
 

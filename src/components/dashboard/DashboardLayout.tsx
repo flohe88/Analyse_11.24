@@ -12,10 +12,13 @@ import { KPICards } from './KPICards'
 import { YearComparisonPicker } from './YearComparisonPicker'
 import { FilterToggle } from './FilterToggle'
 import { DataTable } from './DataTable'
-import { ArrivalMonthsChart } from './charts/ArrivalMonthsChart'
 import { MonthlyCommissionComparison } from './charts/MonthlyCommissionComparison'
 import { BookingsByArrivalMonthChart } from './charts/BookingsByArrivalMonthChart'
 import { BookingTimeDistributionChart } from './charts/BookingTimeDistributionChart'
+import { MonthlyAverageRevenueChart } from './charts/MonthlyAverageRevenueChart'
+import { BookingsPerMonthChart } from './charts/BookingsPerMonthChart'
+import { ArrivalsPerMonthChart } from './charts/ArrivalsPerMonthChart'
+import { BookingsByArrivalDayChart } from './charts/BookingsByArrivalDayChart'
 import { BookingData } from '../../types/booking'
 
 interface DashboardLayoutProps {
@@ -270,37 +273,70 @@ export function DashboardLayout({ bookings }: DashboardLayoutProps) {
 
           {/* Charts */}
           {filterType === 'arrival' && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Anreisen pro Monat</h2>
-              <ArrivalMonthsChart
-                data={filteredData}
-                comparisonData={comparisonData}
-                filterStartDate={dateRange.start}
-                filterEndDate={dateRange.end}
-                isYearComparison={isYearComparison}
-              />
-            </div>
-          )}
-
-          {filterType === 'booking' && !isYearComparison && (
             <>
               <div className="bg-white shadow rounded-lg p-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Buchungen nach Anreisemonat</h2>
-                <BookingsByArrivalMonthChart
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Anreisen pro Monat</h2>
+                <ArrivalsPerMonthChart
                   data={filteredData}
-                  filterStartDate={dateRange.start}
-                  filterEndDate={dateRange.end}
+                  comparisonData={comparisonData}
+                  isYearComparison={isYearComparison}
                 />
               </div>
 
-              <div className="bg-white shadow rounded-lg p-6 mt-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Buchungen nach Uhrzeit</h2>
-                <BookingTimeDistributionChart
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Durchschnittlicher Umsatz pro Monat</h2>
+                <MonthlyAverageRevenueChart
                   data={filteredData}
-                  filterStartDate={dateRange.start}
-                  filterEndDate={dateRange.end}
+                  comparisonData={comparisonData}
+                  isYearComparison={isYearComparison}
                 />
               </div>
+            </>
+          )}
+
+          {filterType === 'booking' && (
+            <>
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Buchungen pro Monat</h2>
+                <BookingsPerMonthChart
+                  data={filteredData}
+                  comparisonData={comparisonData}
+                  isYearComparison={isYearComparison}
+                />
+              </div>
+
+              {!isYearComparison && (
+                <div className="bg-white shadow rounded-lg p-6">
+                  <h2 className="text-lg font-medium text-gray-900 mb-4">Buchungen nach Anreisemonat</h2>
+                  <BookingsByArrivalMonthChart
+                    data={filteredData}
+                    filterStartDate={dateRange.start}
+                    filterEndDate={dateRange.end}
+                  />
+                </div>
+              )}
+
+              {!isYearComparison && (
+                <div className="bg-white shadow rounded-lg p-6 mt-6">
+                  <h2 className="text-lg font-medium text-gray-900 mb-4">Buchungen nach Uhrzeit</h2>
+                  <BookingTimeDistributionChart
+                    data={filteredData}
+                    filterStartDate={dateRange.start}
+                    filterEndDate={dateRange.end}
+                  />
+                </div>
+              )}
+
+              {isYearComparison && (
+                <div className="bg-white shadow rounded-lg p-6">
+                  <h2 className="text-lg font-medium text-gray-900 mb-4">Buchungen nach Anreisetag (Jahresvergleich)</h2>
+                  <BookingsByArrivalDayChart
+                    data={filteredData}
+                    comparisonData={comparisonData}
+                    isYearComparison={isYearComparison}
+                  />
+                </div>
+              )}
             </>
           )}
 

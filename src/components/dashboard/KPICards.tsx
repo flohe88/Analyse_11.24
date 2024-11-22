@@ -1,9 +1,22 @@
 import React from 'react';
 import { useMemo } from 'react'
-import { BookingData } from '../../types/booking'
-import { ArrowDownIcon, ArrowUpIcon } from '@heroicons/react/20/solid';
 import { de } from 'date-fns/locale';
 import { parseISO } from 'date-fns';
+import { ArrowDownIcon, ArrowUpIcon } from '@heroicons/react/20/solid';
+
+interface BookingData {
+  revenue?: number;
+  commission?: number;
+  arrivalDate?: string;
+  departureDate?: string;
+  adults?: number;
+  children?: number;
+  pets?: number;
+  phoneBooking?: string;
+  isCancelled?: boolean;
+  commissionPercent?: number;
+  bookingSource?: string;
+}
 
 interface KPICardsProps {
   data: BookingData[]
@@ -34,29 +47,53 @@ export function KPICards({ data, isYearComparison, comparisonData, endDate, comp
 
     const totalBookings = data.length;
     
-    // Calculate average nights
-    let averageNights = 0;
-    if (data && data.length > 0) {
-      const validBookings = data.filter(booking => 
+    // Helper function to calculate average nights
+    const calculateAverageNights = (bookings: BookingData[]): number => {
+      if (!bookings || bookings.length === 0) return 0;
+
+      const validBookings = bookings.filter(booking => 
         booking.arrivalDate && 
         booking.departureDate
       );
 
-      if (validBookings.length > 0) {
-        const totalNights = validBookings.reduce((sum, booking) => {
-          try {
-            const arrival = parseISO(booking.arrivalDate);
-            const departure = parseISO(booking.departureDate);
-            const nights = (departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24);
-            return sum + nights;
-          } catch (error) {
-            console.error('Error calculating nights for booking:', error);
-            return sum;
-          }
-        }, 0);
-        averageNights = Number((totalNights / validBookings.length).toFixed(2));
+      if (validBookings.length === 0) return 0;
+
+      const totalNights = validBookings.reduce((sum, booking) => {
+        try {
+          const arrival = parseISO(booking.arrivalDate);
+          const departure = parseISO(booking.departureDate);
+          const nights = (departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24);
+          return sum + nights;
+        } catch (error) {
+          console.error('Error calculating nights for booking:', error);
+          return sum;
+        }
+      }, 0);
+
+      return Number((totalNights / validBookings.length).toFixed(2));
+    };
+
+    // Calculate average nights
+    let averageNights = calculateAverageNights(data);
+
+    // Calculate total nights
+    const totalNights = Math.floor(data.reduce((sum, booking) => {
+      if (booking.arrivalDate && booking.departureDate) {
+        try {
+          const arrival = parseISO(booking.arrivalDate);
+          const departure = parseISO(booking.departureDate);
+          const nights = (departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24);
+          return sum + nights;
+        } catch (error) {
+          console.error('Error calculating nights for booking:', error);
+          return sum;
+        }
       }
-    }
+      return sum;
+    }, 0));
+
+    // Calculate average revenue per night
+    const averageRevenuePerNight = totalNights > 0 ? Math.round((totalRevenue / totalNights) * 100) / 100 : 0;
 
     const validBookings = data.filter(booking => 
       booking.arrivalDate && 
@@ -185,71 +222,49 @@ export function KPICards({ data, isYearComparison, comparisonData, endDate, comp
         return sum + revenue;
       }, 0);
 
-      const comparisonServiceFee = comparisonData.reduce((sum, booking) => {
-        const revenue = booking.revenue || 0;
-        return sum + (revenue > 150 ? 25 : 0);
-      }, 0);
-
       const comparisonCommission = comparisonData.reduce((sum, booking) => {
         const commission = booking.commission || 0;
         return sum + commission;
       }, 0);
 
+      const comparisonServiceFee = comparisonData.reduce((sum, booking) => {
+        const revenue = booking.revenue || 0;
+        return sum + (revenue > 150 ? 25 : 0);
+      }, 0);
+
       const comparisonCommissionWithFee = comparisonCommission + comparisonServiceFee;
 
-      const comparisonBookings = comparisonData.length;
+      const comparisonBookingsWithServiceFee = comparisonData.reduce((sum, booking) => {
+        const revenue = booking.revenue || 0;
+        return sum + (revenue > 150 ? 1 : 0);
+      }, 0);
 
-      // Calculate average nights
-      let comparisonAverageNights = 0;
-      if (comparisonData && comparisonData.length > 0) {
-        const validBookings = comparisonData.filter(booking => 
-          booking.arrivalDate && 
-          booking.departureDate
-        );
+      const comparisonAverageRevenue = comparisonData.length > 0 
+        ? comparisonRevenue / comparisonData.length
+        : 0;
 
-        if (validBookings.length > 0) {
-          const totalNights = validBookings.reduce((sum, booking) => {
-            try {
-              const arrival = parseISO(booking.arrivalDate);
-              const departure = parseISO(booking.departureDate);
-              const nights = (departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24);
-              return sum + nights;
-            } catch (error) {
-              console.error('Error calculating nights for booking:', error);
-              return sum;
-            }
-          }, 0);
-          comparisonAverageNights = Number((totalNights / validBookings.length).toFixed(2));
-        }
-      }
-
-      const validComparisonBookings = comparisonData.filter(booking => 
-        booking.arrivalDate && 
-        comparisonEndDate &&
-        (() => {
+      // Calculate comparison total nights
+      const comparisonTotalNights = Math.floor(comparisonData.reduce((sum, booking) => {
+        if (booking.arrivalDate && booking.departureDate) {
           try {
-            const [arrivalDay, arrivalMonth, arrivalYear] = booking.arrivalDate.split('.');
-            const arrival = new Date(
-              parseInt(arrivalYear),
-              parseInt(arrivalMonth) - 1,
-              parseInt(arrivalDay)
-            );
-
-            const [endDay, endMonth, endYear] = comparisonEndDate.split('.');
-            const filterEnd = new Date(
-              parseInt(endYear),
-              parseInt(endMonth) - 1,
-              parseInt(endDay),
-              23, 59, 59
-            );
-
-            return arrival <= filterEnd;
-          } catch {
-            return false;
+            const arrival = parseISO(booking.arrivalDate);
+            const departure = parseISO(booking.departureDate);
+            const nights = (departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24);
+            return sum + nights;
+          } catch (error) {
+            console.error('Error calculating nights for comparison booking:', error);
+            return sum;
           }
-        })()
-      ).length;
-      
+        }
+        return sum;
+      }, 0));
+
+      // Calculate comparison average revenue per night
+      const comparisonAverageRevenuePerNight = comparisonTotalNights > 0 
+        ? Math.round((comparisonRevenue / comparisonTotalNights) * 100) / 100 
+        : 0;
+
+      // Calculate comparison booking types
       const comparisonBookingTypes = comparisonData.reduce((acc, booking) => {
         const hasChildren = booking.children && booking.children > 0;
         const hasPets = (booking.pets || 0) > 0;
@@ -274,24 +289,26 @@ export function KPICards({ data, isYearComparison, comparisonData, endDate, comp
         {
           label: 'Nur Erwachsene',
           count: comparisonBookingTypes.adultsOnly,
-          percentage: (comparisonBookingTypes.adultsOnly / comparisonBookings) * 100
+          percentage: (comparisonBookingTypes.adultsOnly / comparisonData.length) * 100
         },
         {
           label: 'Mit Kindern',
           count: comparisonBookingTypes.withChildren,
-          percentage: (comparisonBookingTypes.withChildren / comparisonBookings) * 100
+          percentage: (comparisonBookingTypes.withChildren / comparisonData.length) * 100
         },
         {
           label: 'Mit Haustieren',
           count: comparisonBookingTypes.withPets,
-          percentage: (comparisonBookingTypes.withPets / comparisonBookings) * 100
+          percentage: (comparisonBookingTypes.withPets / comparisonData.length) * 100
         }
       ];
 
+      // Calculate comparison phone bookings
       const comparisonPhoneBookings = comparisonData.reduce((sum, booking) => {
         return sum + (booking.phoneBooking ? 1 : 0);
       }, 0);
-      const comparisonPhoneBookingsPercent = (comparisonPhoneBookings / comparisonBookings) * 100;
+
+      const comparisonPhoneBookingsPercent = (comparisonPhoneBookings / comparisonData.length) * 100;
 
       const comparisonPhoneBookingsByPerson = comparisonData.reduce((acc, booking) => {
         if (booking.phoneBooking) {
@@ -309,55 +326,37 @@ export function KPICards({ data, isYearComparison, comparisonData, endDate, comp
           percentage: (count / comparisonPhoneBookings) * 100
         }));
 
-      const comparisonGuests = comparisonData.reduce((sum, booking) => {
+      // Calculate comparison total guests
+      const comparisonTotalGuests = comparisonData.reduce((sum, booking) => {
         const adults = booking.adults || 0;
         const children = booking.children || 0;
         return sum + adults + children;
       }, 0);
 
-      const comparisonAverageCommissionPercent = comparisonData.length > 0 
-        ? comparisonData.reduce((sum, booking) => {
-            const commissionPercent = booking.commissionPercent || 0;
-            return sum + commissionPercent;
-          }, 0) / comparisonData.length 
-        : 0;
-
-      // Berechne die Anzahl der stornierten Buchungen für den Vergleichszeitraum
+      // Calculate comparison cancelled bookings
       const comparisonCancelledBookings = comparisonData.reduce((sum, booking) => {
         return sum + (booking.isCancelled ? 1 : 0);
       }, 0);
 
-      // Berechne die Stornierungsquote für den Vergleichszeitraum
-      const comparisonCancellationRate = comparisonData.length > 0 
-        ? (comparisonCancelledBookings / comparisonData.length) * 100
-        : 0;
-
-      // Berechne die Anzahl der Buchungen mit Servicepauschale für den Vergleichszeitraum
-      const comparisonBookingsWithServiceFee = comparisonData.reduce((sum, booking) => {
-        const revenue = booking.revenue || 0;
-        return sum + (revenue > 150 ? 1 : 0);
-      }, 0);
-
-      // Berechne den durchschnittlichen Umsatz für den Vergleichszeitraum
-      const comparisonAverageRevenue = comparisonData.length > 0
-        ? comparisonRevenue / comparisonData.length
-        : 0;
+      const comparisonCancellationRate = (comparisonCancelledBookings / comparisonData.length) * 100;
 
       comparisonStats = {
         revenue: comparisonRevenue,
         commission: comparisonCommissionWithFee,
         serviceFee: comparisonServiceFee,
-        bookings: comparisonBookings,
-        averageNights: comparisonAverageNights,
+        bookings: comparisonData.length,
+        averageNights: calculateAverageNights(comparisonData),
+        totalNights: comparisonTotalNights,
+        averageRevenuePerNight: comparisonAverageRevenuePerNight,
         bookingTypeStats: comparisonBookingTypeStats,
         phoneBookings: comparisonPhoneBookings,
         phoneBookingsPercent: comparisonPhoneBookingsPercent,
         phoneBookingsByPerson: comparisonSortedPhoneBookings,
-        guests: comparisonGuests,
-        averageCommissionPercent: comparisonAverageCommissionPercent,
+        totalGuests: comparisonTotalGuests,
         cancellationRate: comparisonCancellationRate,
+        cancelledBookings: comparisonCancelledBookings,
         bookingsWithServiceFee: comparisonBookingsWithServiceFee,
-        averageRevenue: comparisonAverageRevenue,
+        averageRevenue: comparisonAverageRevenue
       };
     }
 
@@ -367,6 +366,8 @@ export function KPICards({ data, isYearComparison, comparisonData, endDate, comp
       totalServiceFee,
       totalBookings,
       averageNights,
+      totalNights,
+      averageRevenuePerNight,
       bookingTypeStats,
       phoneBookings,
       phoneBookingsPercent,
@@ -619,6 +620,12 @@ export function KPICards({ data, isYearComparison, comparisonData, endDate, comp
             subtitle={`⌀ ${formatCurrency(stats.averageRevenue)}`}
           />
           <KPICard
+            title="Durchschn. Umsatz pro Nacht"
+            value={stats.averageRevenuePerNight}
+            comparisonValue={stats.comparisonStats?.averageRevenuePerNight}
+            formatter={formatCurrency}
+          />
+          <KPICard
             title="Stornierungsquote"
             value={stats.cancellationRate}
             comparisonValue={stats.comparisonStats?.cancellationRate}
@@ -664,8 +671,20 @@ export function KPICards({ data, isYearComparison, comparisonData, endDate, comp
           </div>
           <div className="bg-white rounded p-2">
             <div className="flex justify-between items-center mb-1">
+              <span className="text-sm font-medium">Gesamtnächte</span>
+              <span className="text-sm text-gray-500">{formatNumber(stats.totalNights)}</span>
+            </div>
+          </div>
+          <div className="bg-white rounded p-2">
+            <div className="flex justify-between items-center mb-1">
               <span className="text-sm font-medium">Durchschn. Übernachtungen</span>
               <span className="text-sm text-gray-500">{formatNumber(stats.averageNights)} Nächte</span>
+            </div>
+          </div>
+          <div className="bg-white rounded p-2">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-sm font-medium">Gesamtanzahl Reisende</span>
+              <span className="text-sm text-gray-500">{formatNumber(stats.totalGuests)}</span>
             </div>
           </div>
           {stats.bookingTypeStats.map(({ label, count, percentage }) => (

@@ -45,6 +45,7 @@ export const BookingsByArrivalMonthChart: React.FC<BookingsByArrivalMonthChartPr
   filterEndDate
 }) => {
   const chartData = useMemo(() => {
+
     if (!filterStartDate || !filterEndDate) return [];
 
     // Initialisiere Monate
