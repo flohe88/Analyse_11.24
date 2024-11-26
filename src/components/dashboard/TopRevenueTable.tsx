@@ -27,6 +27,8 @@ interface ApartmentStats {
     commission: number;
     bookings: number;
     nights: number;
+    cancellationRate: number;
+    occupancyRate: number;
   };
 }
 
@@ -44,6 +46,8 @@ interface AccommodationStats {
     commission: number;
     bookings: number;
     nights: number;
+    cancellationRate: number;
+    occupancyRate: number;
   };
   apartments?: {
     [key: string]: ApartmentStats;
@@ -68,6 +72,9 @@ function getSourceColor(source: string) {
   return sourceColors[source] || sourceColors.default;
 }
 
+type SortField = 'name' | 'revenue' | 'bookings' | 'nights' | 'cancellationRate' | 'occupancyRate';
+type SortDirection = 'asc' | 'desc';
+
 export function TopRevenueTable({ 
   data, 
   filterStartDate, 
@@ -80,6 +87,8 @@ export function TopRevenueTable({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedBookingSource, setSelectedBookingSource] = useState<string>('all');
   const [hasScroll, setHasScroll] = useState(false);
+  const [sortField, setSortField] = useState<SortField>('revenue');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const tableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -195,6 +204,8 @@ export function TopRevenueTable({
             commission: 0,
             bookings: 0,
             nights: 0,
+            cancellationRate: 0,
+            occupancyRate: 0,
           },
         };
       }
@@ -215,6 +226,8 @@ export function TopRevenueTable({
             commission: 0,
             bookings: 0,
             nights: 0,
+            cancellationRate: 0,
+            occupancyRate: 0,
           },
         };
       }
@@ -295,8 +308,27 @@ export function TopRevenueTable({
         .slice(0, 30);
     }
 
-    // Sortiere die Ergebnisse immer nach Umsatz
-    sortedStats = sortedStats.sort((a, b) => b.totalRevenue - a.totalRevenue);
+    // Sortiere die Ergebnisse
+    sortedStats = sortedStats.sort((a, b) => {
+      const multiplier = sortDirection === 'desc' ? -1 : 1;
+
+      switch (sortField) {
+        case 'name':
+          return multiplier * a.accommodation.localeCompare(b.accommodation);
+        case 'revenue':
+          return multiplier * (a.totalRevenue - b.totalRevenue);
+        case 'bookings':
+          return multiplier * (a.bookingCount - b.bookingCount);
+        case 'nights':
+          return multiplier * (a.totalNights - b.totalNights);
+        case 'cancellationRate':
+          return multiplier * ((a.cancelledCount / a.bookingCount) - (b.cancelledCount / b.bookingCount));
+        case 'occupancyRate':
+          return multiplier * (a.occupancyRate - b.occupancyRate);
+        default:
+          return 0;
+      }
+    });
 
     // Füge Vergleichsdaten hinzu, falls vorhanden
     if (comparisonStats) {
@@ -310,7 +342,9 @@ export function TopRevenueTable({
               revenue: stat.totalRevenue - comparisonStat.totalRevenue,
               commission: stat.totalCommission - comparisonStat.totalCommission,
               bookings: stat.bookingCount - comparisonStat.bookingCount,
-              nights: stat.totalNights - comparisonStat.totalNights
+              nights: stat.totalNights - comparisonStat.totalNights,
+              cancellationRate: (stat.cancelledCount / stat.bookingCount) - (comparisonStat.cancelledCount / comparisonStat.bookingCount),
+              occupancyRate: stat.occupancyRate - comparisonStat.occupancyRate,
             }
           };
 
@@ -325,7 +359,9 @@ export function TopRevenueTable({
                   revenue: currentApartment.totalRevenue - comparisonApartment.totalRevenue,
                   commission: currentApartment.totalCommission - comparisonApartment.totalCommission,
                   bookings: currentApartment.bookingCount - comparisonApartment.bookingCount,
-                  nights: currentApartment.totalNights - comparisonApartment.totalNights
+                  nights: currentApartment.totalNights - comparisonApartment.totalNights,
+                  cancellationRate: (currentApartment.cancelledCount / currentApartment.bookingCount) - (comparisonApartment.cancelledCount / comparisonApartment.bookingCount),
+                  occupancyRate: currentApartment.occupancyRate - comparisonApartment.occupancyRate,
                 };
               }
             });
@@ -338,7 +374,7 @@ export function TopRevenueTable({
     }
 
     return sortedStats;
-  }, [data, comparisonData, searchQuery, selectedBookingSource, totalDaysInRange]);
+  }, [data, comparisonData, searchQuery, selectedBookingSource, totalDaysInRange, sortField, sortDirection]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('de-DE', {
@@ -348,7 +384,31 @@ export function TopRevenueTable({
   };
 
   const formatPercent = (value: number) => {
-    return `${value.toFixed(1)}%`;
+    return `${value.toFixed(2)}%`;
+  };
+
+  const formatDifference = (value: number | undefined, type: 'currency' | 'percent' | 'number' = 'number') => {
+    if (value === undefined) return null;
+    
+    let formattedValue = '';
+    switch (type) {
+      case 'currency':
+        formattedValue = formatCurrency(value);
+        break;
+      case 'percent':
+        formattedValue = value.toFixed(2) + '%';
+        break;
+      case 'number':
+        formattedValue = value.toString();
+        break;
+    }
+
+    const className = value > 0 ? 'text-green-600' : value < 0 ? 'text-red-600' : 'text-gray-500';
+    return (
+      <span className={className}>
+        {value > 0 ? '+' : ''}{formattedValue}
+      </span>
+    );
   };
 
   const getCancellationColor = (percentage: number) => {
@@ -366,16 +426,18 @@ export function TopRevenueTable({
     return 'bg-red-100 text-red-800';
   };
 
-  const formatDifference = (value: number, isCurrency: boolean = false) => {
-    const prefix = value > 0 ? '+' : '';
-    if (isCurrency) {
-      return <span className={`${value > 0 ? 'text-green-600' : value < 0 ? 'text-red-600' : ''}`}>
-        {prefix}{formatCurrency(value)}
-      </span>;
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'desc' ? 'asc' : 'desc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
     }
-    return <span className={`${value > 0 ? 'text-green-600' : value < 0 ? 'text-red-600' : ''}`}>
-      {prefix}{value}
-    </span>;
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return '↕️';
+    return sortDirection === 'desc' ? '↓' : '↑';
   };
 
   return (
@@ -426,36 +488,32 @@ export function TopRevenueTable({
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rang
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('name')}>
+                    Rang {getSortIcon('name')}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Unterkunft
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('revenue')}>
+                    Unterkunft {getSortIcon('revenue')}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Wohnung
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('bookings')}>
+                    Wohnung {getSortIcon('bookings')}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Gesamtumsatz
-                    {isYearComparison && <div className="text-xs normal-case">Differenz zum Vorjahr</div>}
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('nights')}>
+                    Gesamtumsatz {getSortIcon('nights')}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Anzahl Buchungen
-                    {isYearComparison && <div className="text-xs normal-case">Differenz zum Vorjahr</div>}
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('cancellationRate')}>
+                    Anzahl Buchungen {getSortIcon('cancellationRate')}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Anzahl Nächte
-                    {isYearComparison && <div className="text-xs normal-case">Differenz zum Vorjahr</div>}
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('bookings')}>
+                    Anzahl Nächte {getSortIcon('bookings')}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Provision
-                    {isYearComparison && <div className="text-xs normal-case">Differenz zum Vorjahr</div>}
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('nights')}>
+                    Provision {getSortIcon('nights')}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Storno
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('cancellationRate')}>
+                    Storno {getSortIcon('cancellationRate')}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Auslastung
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('occupancyRate')}>
+                    Auslastung {getSortIcon('occupancyRate')}
                   </th>
                 </tr>
               </thead>
@@ -486,7 +544,7 @@ export function TopRevenueTable({
                               </button>
                               <Link
                                 to={`/accommodation/${encodeURIComponent(stat.accommodation)}`}
-                                state={{ bookings: data }}
+                                state={{ allBookings: data }}
                                 className="ml-2 px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                               >
                                 Details
@@ -503,7 +561,7 @@ export function TopRevenueTable({
                             {formatCurrency(stat.totalRevenue)}
                             {isYearComparison && stat.difference && (
                               <div className="text-sm">
-                                {formatDifference(stat.difference.revenue, true)}
+                                {formatDifference(stat.difference.revenue, 'currency')}
                               </div>
                             )}
                           </td>
@@ -511,7 +569,7 @@ export function TopRevenueTable({
                             {stat.bookingCount}
                             {isYearComparison && stat.difference && (
                               <div className="text-sm">
-                                {formatDifference(stat.difference.bookings)}
+                                {formatDifference(stat.difference.bookings, 'number')}
                               </div>
                             )}
                           </td>
@@ -519,7 +577,7 @@ export function TopRevenueTable({
                             {stat.totalNights}
                             {isYearComparison && stat.difference && (
                               <div className="text-sm">
-                                {formatDifference(stat.difference.nights)}
+                                {formatDifference(stat.difference.nights, 'number')}
                               </div>
                             )}
                           </td>
@@ -527,7 +585,7 @@ export function TopRevenueTable({
                             {formatCurrency(stat.totalCommission)}
                             {isYearComparison && stat.difference && (
                               <div className="text-sm">
-                                {formatDifference(stat.difference.commission, true)}
+                                {formatDifference(stat.difference.commission, 'currency')}
                               </div>
                             )}
                           </td>
@@ -540,11 +598,21 @@ export function TopRevenueTable({
                                 </span>
                               );
                             })()}
+                            {isYearComparison && stat.difference && (
+                              <div className="text-sm">
+                                {formatDifference(stat.difference.cancellationRate, 'percent')}
+                              </div>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getOccupancyColor(stat.occupancyRate)}`}>
                               {formatPercent(stat.occupancyRate)}
                             </span>
+                            {isYearComparison && stat.difference && (
+                              <div className="text-sm">
+                                {formatDifference(stat.difference.occupancyRate, 'percent')}
+                              </div>
+                            )}
                           </td>
                         </tr>
                         {isExpanded && apartments.map((apartment, apartmentIndex) => (
@@ -561,7 +629,7 @@ export function TopRevenueTable({
                               {formatCurrency(apartment.totalRevenue)}
                               {isYearComparison && apartment.difference && (
                                 <div className="text-sm">
-                                  {formatDifference(apartment.difference.revenue, true)}
+                                  {formatDifference(apartment.difference.revenue, 'currency')}
                                 </div>
                               )}
                             </td>
@@ -569,7 +637,7 @@ export function TopRevenueTable({
                               {apartment.bookingCount}
                               {isYearComparison && apartment.difference && (
                                 <div className="text-sm">
-                                  {formatDifference(apartment.difference.bookings)}
+                                  {formatDifference(apartment.difference.bookings, 'number')}
                                 </div>
                               )}
                             </td>
@@ -577,7 +645,7 @@ export function TopRevenueTable({
                               {apartment.totalNights}
                               {isYearComparison && apartment.difference && (
                                 <div className="text-sm">
-                                  {formatDifference(apartment.difference.nights)}
+                                  {formatDifference(apartment.difference.nights, 'number')}
                                 </div>
                               )}
                             </td>
@@ -585,7 +653,7 @@ export function TopRevenueTable({
                               {formatCurrency(apartment.totalCommission)}
                               {isYearComparison && apartment.difference && (
                                 <div className="text-sm">
-                                  {formatDifference(apartment.difference.commission, true)}
+                                  {formatDifference(apartment.difference.commission, 'currency')}
                                 </div>
                               )}
                             </td>
@@ -598,11 +666,21 @@ export function TopRevenueTable({
                                   </span>
                                 );
                               })()}
+                              {isYearComparison && apartment.difference && (
+                                <div className="text-sm">
+                                  {formatDifference(apartment.difference.cancellationRate, 'percent')}
+                                </div>
+                              )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getOccupancyColor(apartment.occupancyRate)}`}>
                                 {formatPercent(apartment.occupancyRate)}
                               </span>
+                              {isYearComparison && apartment.difference && (
+                                <div className="text-sm">
+                                  {formatDifference(apartment.difference.occupancyRate, 'percent')}
+                                </div>
+                              )}
                             </td>
                           </tr>
                         ))}
